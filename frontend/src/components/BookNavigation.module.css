@@ -1,0 +1,31 @@
+.bookNavigation {
+  margin: 2rem 0;
+  padding: 1rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+}
+
+.navList {
+  list-style: none;
+  padding-left: 0;
+}
+
+.navList > li {
+  margin-bottom: 0.5rem;
+}
+
+.navList ul {
+  margin: 0.5rem 0 0 1rem;
+  padding-left: 1rem;
+  border-left: 2px solid #00a3e0;
+}
+
+.navList a {
+  text-decoration: none;
+  color: #007cba;
+}
+
+.navList a:hover {
+  text-decoration: underline;
+}

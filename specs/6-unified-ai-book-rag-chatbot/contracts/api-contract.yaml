@@ -1,0 +1,269 @@
+openapi: 3.0.0
+info:
+  title: RAG Chatbot API
+  description: API for the Unified AI/Spec-Driven Book with Integrated RAG Chatbot
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+    description: Development server
+  - url: https://api.example.com
+    description: Production server
+
+paths:
+  /api/v1/ingest:
+    post:
+      summary: Ingest book content for RAG
+      description: Process and store book content for retrieval-augmented generation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+                  description: The markdown content to be ingested
+                module_id:
+                  type: string
+                  format: uuid
+                  description: The ID of the module this content belongs to
+                chapter_id:
+                  type: string
+                  format: uuid
+                  description: The ID of the chapter this content belongs to
+                section_id:
+                  type: string
+                  format: uuid
+                  description: The ID of the section this content belongs to
+                metadata:
+                  type: object
+                  description: Additional metadata for the content
+              required:
+                - content
+                - module_id
+                - chapter_id
+                - section_id
+      responses:
+        '200':
+          description: Content successfully ingested
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                    description: The ID of the ingested content
+                  status:
+                    type: string
+                    enum: [success, processing]
+        '400':
+          description: Invalid input
+        '500':
+          description: Internal server error
+
+  /api/v1/query:
+    post:
+      summary: Query the RAG system
+      description: Submit a query and receive a response based on book content
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                query:
+                  type: string
+                  description: The user's query
+                session_id:
+                  type: string
+                  format: uuid
+                  description: The session ID for conversation history
+                context_selection:
+                  type: string
+                  description: Specific context to use for the query (optional)
+                max_tokens:
+                  type: integer
+                  description: Maximum number of tokens in response (default 500)
+              required:
+                - query
+      responses:
+        '200':
+          description: Query response with sources
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  response:
+                    type: string
+                    description: The generated response
+                  sources:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        content_id:
+                          type: string
+                          format: uuid
+                          description: The ID of the source content
+                        title:
+                          type: string
+                          description: The title of the source
+                        relevance_score:
+                          type: number
+                          format: float
+                          description: Relevance score of the source
+                        text_preview:
+                          type: string
+                          description: Preview of the source text
+                  session_id:
+                    type: string
+                    format: uuid
+                    description: The session ID
+        '400':
+          description: Invalid query
+        '500':
+          description: Internal server error
+
+  /api/v1/query/context:
+    post:
+      summary: Query with specific context
+      description: Submit a query with specific book sections as context
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                query:
+                  type: string
+                  description: The user's query
+                context_content_ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  description: List of specific content IDs to use as context
+                session_id:
+                  type: string
+                  format: uuid
+                  description: The session ID for conversation history
+              required:
+                - query
+                - context_content_ids
+      responses:
+        '200':
+          description: Query response with sources
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  response:
+                    type: string
+                    description: The generated response
+                  sources:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        content_id:
+                          type: string
+                          format: uuid
+                          description: The ID of the source content
+                        title:
+                          type: string
+                          description: The title of the source
+                        text_preview:
+                          type: string
+                          description: Preview of the source text
+                  session_id:
+                    type: string
+                    format: uuid
+                    description: The session ID
+        '400':
+          description: Invalid query or context
+        '500':
+          description: Internal server error
+
+  /api/v1/sessions:
+    post:
+      summary: Create a new session
+      description: Create a new user session for conversation history
+      responses:
+        '200':
+          description: Session created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  session_id:
+                    type: string
+                    format: uuid
+                    description: The new session ID
+        '500':
+          description: Internal server error
+
+  /api/v1/sessions/{session_id}:
+    get:
+      summary: Get session history
+      description: Retrieve the conversation history for a session
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Session history
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  session_id:
+                    type: string
+                    format: uuid
+                  history:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        query:
+                          type: string
+                        response:
+                          type: string
+                        timestamp:
+                          type: string
+                          format: date-time
+        '404':
+          description: Session not found
+        '500':
+          description: Internal server error
+
+  /api/v1/health:
+    get:
+      summary: Health check
+      description: Check if the API is running
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [healthy]
+                  timestamp:
+                    type: string
+                    format: date-time
